@@ -1,0 +1,137 @@
+USE Kleague;
+
+DESCRIBE PLAYER;
+DESCRIBE TEAM;
+
+
+-- 선수들의 평균 키보다 작은 선수들을 검색
+SELECT	PLAYER_NAME 선수명, POSITION 포지션, BACK_NO 등번호
+FROM	PLAYER
+WHERE	HEIGHT <= (
+						SELECT	AVG(HEIGHT)
+                        FROM	PLAYER
+					)
+ORDER	BY	PLAYER_NAME;
+
+
+-- 정현수 선수의 소속팀 정보를 검색
+SELECT	REGION_NAME 연고지명, TEAM_NAME 팀명, E_TEAM_NAME 영문팀명
+FROM	TEAM
+WHERE	TEAM_ID IN (
+						SELECT	TEAM_ID
+						FROM	PLAYER
+                        WHERE	PLAYER_NAME = '정현수'
+					)
+ORDER	BY TEAM_NAME;
+
+
+-- 각 팀에서 제일 키가 작은 선수를 검색
+SELECT	TEAM_ID 팀코드, PLAYER_NAME 선수명, POSITION 포지션
+FROM	PLAYER P1
+WHERE	HEIGHT = (
+						SELECT	MIN(HEIGHT)
+                        FROM	PLAYER P2
+                        WHERE	P2.TEAM_ID = P1.TEAM_ID
+					)
+ORDER BY TEAM_ID, PLAYER_NAME;
+                    
+SELECT	TEAM_ID 팀코드, PLAYER_NAME 선수명, POSITION 포지션
+FROM	PLAYER
+WHERE	(TEAM_ID, HEIGHT) IN (
+									SELECT	TEAM_ID, MIN(HEIGHT)
+									FROM	PLAYER
+									GROUP	BY	TEAM_ID
+								)
+ORDER BY TEAM_ID, PLAYER_NAME;
+
+
+-- 각 팀에서 제일 키가 큰 선수들을 검색
+SELECT	TEAM_ID, PLAYER_NAME, HEIGHT
+FROM 	PLAYER	P1
+WHERE	HEIGHT = (
+						SELECT	MAX(HEIGHT)
+                        FROM	PLAYER P2
+						WHERE	P2.TEAM_ID = P1.TEAM_ID
+					)
+ORDER	BY TEAM_ID;
+
+
+-- 소속 팀의 평균 키보다 작은 선수들을 검색
+SELECT	TEAM_ID, PLAYER_NAME, POSITION, BACK_NO, HEIGHT
+FROM	PLAYER P1
+WHERE	HEIGHT < (
+						SELECT	AVG(HEIGHT)
+                        FROM	PLAYER P2
+                        WHERE	P2.TEAM_ID = P1.TEAM_ID
+					)
+ORDER	BY P1.TEAM_ID, HEIGHT, PLAYER_NAME;
+
+
+-- 브라질 혹은 러시아 선수가 있는 팀을 검색
+SELECT	TEAM_ID, TEAM_NAME
+FROM	TEAM T
+WHERE	TEAM_ID IN (
+						SELECT	TEAM_ID
+                        FROM	PLAYER P
+                        WHERE	P.NATION IN ('브라질', '러시아')
+					);
+                    
+
+-- 선수 정보와 소속 팀의 평균 키를 함께 검색
+SELECT	TEAM_ID, PLAYER_NAME 선수명, HEIGHT 키,
+		(
+			SELECT	AVG(HEIGHT)
+            FROM	PLAYER P2
+			WHERE	P2.TEAM_ID = P1.TEAM_ID
+		) 팀평균키
+FROM	PLAYER P1
+ORDER	BY TEAM_ID, 선수명;
+
+
+-- 팀명과 소속 선수의 인원수를 검색
+SELECT	TEAM_ID, TEAM_NAME,
+		(
+			SELECT	COUNT(*)
+            FROM	PLAYER P
+            WHERE	P.TEAM_ID = T.TEAM_ID
+		) 탐인원수
+FROM	TEAM T
+ORDER	BY	TEAM_ID;
+
+
+-- K09 팀의 선수 이름, 포지션, 백넘버를 검색
+SELECT	PLAYER_NAME, POSITION, BACK_NO
+FROM	PLAYER
+WHERE	TEAM_ID = 'K09';
+
+SELECT	PLAYER_NAME, POSITION, BACK_NO
+FROM	(
+			SELECT	TEAM_ID, PLAYER_ID, PLAYER_NAME, POSITION, BACK_NO
+            FROM	PLAYER
+            ORDER	BY PLAYER_ID DESC
+		) AS PLAYER_TEMP
+WHERE	TEAM_ID = 'K09';
+
+-- 가독성을 개선한 코드(위의 코드와 실행 결과가 동일)
+WITH PLAYER_TEMP AS
+(
+	SELECT	TEAM_ID, PLAYER_ID, PLAYER_NAME, POSITION, BACK_NO
+	FROM	PLAYER
+	ORDER	BY PLAYER_ID DESC
+)
+SELECT	PLAYER_NAME, POSITION, BACK_NO
+FROM	PLAYER_TEMP
+WHERE	TEAM_ID = 'K09';
+
+
+-- 키가 제일 큰 선수 5 명의 정보를 검색
+WITH PLAYER_TEMP AS
+(
+	SELECT	PLAYER_NAME, POSITION, BACK_NO, HEIGHT
+    FROM	PLAYER
+    WHERE	HEIGHT IS NOT NULL
+    ORDER	BY	HEIGHT DESC
+)
+SELECT	PLAYER_NAME, POSITION, BACK_NO, HEIGHT
+FROM	PLAYER_TEMP
+LIMIT	5;
