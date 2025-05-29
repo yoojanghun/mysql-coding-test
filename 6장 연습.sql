@@ -2,6 +2,7 @@ USE Kleague;
 
 DESCRIBE PLAYER;
 DESCRIBE TEAM;
+DESCRIBE SCHEDULE;
 
 
 -- 선수들의 평균 키보다 작은 선수들을 검색
@@ -12,6 +13,20 @@ WHERE	HEIGHT <= (
                         FROM	PLAYER
 					)
 ORDER	BY	PLAYER_NAME;
+
+
+-- 전체 선수들의 평균 키보다 작은 키를 가진 선수 정보 출력
+SELECT 	PLAYER_NAME 선수명, HEIGHT 키,
+		(
+			SELECT	ROUND(AVG(HEIGHT))
+            FROM	PLAYER
+        ) '전체 평균키'
+FROM	PLAYER
+WHERE	HEIGHT < (
+						SELECT	ROUND(AVG(HEIGHT))
+                        FROM	PLAYER
+					)
+ORDER	BY 선수명;
 
 
 -- 정현수 선수의 소속팀 정보를 검색
@@ -97,6 +112,18 @@ SELECT	TEAM_ID, TEAM_NAME,
 		) 탐인원수
 FROM	TEAM T
 ORDER	BY	TEAM_ID;
+
+
+-- 각 팀의 마지막 경기가 진행된 날짜를 검색
+SELECT	TEAM_ID, TEAM_NAME,
+		(
+			SELECT	MAX(SCHE_DATE)
+            FROM	SCHEDULE SC
+            WHERE	GUBUN = 'Y' AND
+					(SC.HOMETEAM_ID = T.TEAM_ID OR
+                    SC.AWAYTEAM_ID = T.TEAM_ID)
+        ) '최종 경기일' 
+FROM	TEAM T;
 
 
 -- K09 팀의 선수 이름, 포지션, 백넘버를 검색
