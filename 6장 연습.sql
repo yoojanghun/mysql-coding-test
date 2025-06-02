@@ -15,6 +15,43 @@ WHERE	HEIGHT <= (
 ORDER	BY	PLAYER_NAME;
 
 
+-- 정현수 선수의 소속팀 정보를 검색(정현수 선수는 동명이인)
+SELECT	REGION_NAME 연고지명, TEAM_NAME 팀명, E_TEAM_NAME 영문팀명
+FROM	PLAYER P JOIN TEAM T USING(TEAM_ID)
+WHERE	P.PLAYER_NAME = '정현수'
+ORDER BY TEAM_NAME; 
+
+SELECT	REGION_NAME 연고지명, TEAM_NAME 팀명, E_TEAM_NAME 영문팀명
+FROM	TEAM
+WHERE	TEAM_ID IN (
+						SELECT	TEAM_ID
+                        FROM	PLAYER
+                        WHERE	PLAYER_NAME = '정현수'
+					)
+ORDER BY TEAM_NAME; 
+                    
+                    
+-- 각 팀에서 가장 키가 작은 선수를 검색
+SELECT	TEAM_ID 팀코드, PLAYER_NAME 선수명, POSITION 포지션, BACK_NO 백넘버, HEIGHT 키
+FROM	PLAYER
+WHERE	(TEAM_ID, HEIGHT) IN (
+								SELECT	TEAM_ID, MIN(HEIGHT)
+                                FROM	PLAYER
+                                GROUP	BY TEAM_ID
+								)
+ORDER BY TEAM_ID, PLAYER_NAME;
+
+/* 아래처럼 하면 안됨. 키의 최소값을 구하긴 하는데, 여러 팀들의 최소 키가 서브쿼리 안에 들어 있음. */
+SELECT	TEAM_ID 팀코드, PLAYER_NAME 선수명, POSITION 포지션, BACK_NO 백넘버, HEIGHT 키
+FROM	PLAYER
+WHERE	HEIGHT IN (
+						SELECT	MIN(HEIGHT)
+                        FROM	PLAYER
+                        GROUP	BY TEAM_ID
+					)
+ORDER BY TEAM_ID, PLAYER_NAME;
+
+
 -- 전체 선수들의 평균 키보다 작은 키를 가진 선수 정보 출력
 SELECT 	PLAYER_NAME 선수명, HEIGHT 키,
 		(
