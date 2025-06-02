@@ -136,3 +136,120 @@ SELECT	P.PLAYER_NAME 선수명, P.BACK_NO 백넘버, T.TEAM_NAME 팀명, T.REGIO
 FROM	PLAYER P JOIN TEAM T USING(TEAM_ID)
 WHERE	P.POSITION = 'GK'
 ORDER	BY P.BACK_NO;
+
+
+-- 선수, 소속 팀, 그 팀의 전용구장 정보를 같이 출력
+SELECT	P.PLAYER_NAME 선수명, P.POSITION 포지션,
+		T.TEAM_NAME 소속팀, T.REGION_NAME 연고지,
+        ST.STADIUM_NAME 전용구장, ST.SEAT_COUNT 좌석수
+FROM	PLAYER P 
+		JOIN TEAM T ON P.TEAM_ID = T.TEAM_ID
+        JOIN STADIUM ST ON T.STADIUM_ID = ST.STADIUM_ID
+ORDER	BY 선수명;
+
+
+-- 대부분 PK와 FK관계의 조인이 이루어짐. 항상 그런건 아님
+-- 팀과 전용 경기장의 전화번호가 같은 팀을 검색
+SELECT	T.TEAM_NAME, ST.STADIUM_NAME, ST.TEL
+FROM	TEAM T JOIN STADIUM ST ON T.TEL = ST.TEL;
+								/* TEL은 PK, FK가 아닌 일반 속성 */
+
+
+-- GK 포지션의 선수 마다 팀 연고지, 팀명, 구장명을 출력
+-- 조인할 테이블의 순서는 중요하지 않다.
+SELECT	P.PLAYER_NAME 선수명, P.POSITION 포지션,
+		T.REGION_NAME 연고지, T.TEAM_NAME 팀명,
+        ST.STADIUM_NAME 구장명
+FROM	PLAYER P 
+		JOIN TEAM T ON P.TEAM_ID = T.TEAM_ID
+        JOIN STADIUM ST ON T.STADIUM_ID = ST.STADIUM_ID
+WHERE	P.POSITION = 'GK'
+ORDER	BY 선수명;
+
+
+-- 홈팀이 3점 이상 차이로 승리한 경기의 경기장 이름, 경기 일정, 홈팀명과 원정팀명을 출력
+SELECT	ST.STADIUM_NAME 경기장명, SC.SCHE_DATE 경기일정,
+		SC.HOME_SCORE '홈팀 점수', SC.AWAY_SCORE '원정팀 점수'
+FROM	STADIUM ST 
+		JOIN SCHEDULE SC USING(STADIUM_ID)
+        JOIN TEAM T USING(STADIUM_ID)
+WHERE	GUBUN = 'Y' AND
+		SC.HOME_SCORE >= SC.AWAY_SCORE + 3;
+/* 이 상태에선 홈팀명과 원정팀명을 구할 수 없다. 
+TEAM 테이블에서 SCHEDULE 테이블과 HOMETEAM_ID에 대해 조인하여 HOMETEAM에 대한 정보를 얻고,
+TEAM 테이블에서 SCHEDULE 테이블과 AWAYTEAM_ID에 대해 다시 조인하여 AWAYTEAM에 대한 정보를 추가적으로 얻는다.*/
+
+SELECT	*
+FROM	SCHEDULE;		/* HOMETEAM과 AWAYTEAM이 몇대 몇으로 언제 어디서 경기를 치루었는지 알려줌 */
+
+SELECT	ST.STADIUM_NAME 경기장명, SC.SCHE_DATE 경기일정,
+		HT.TEAM_NAME 홈팀명, AW.TEAM_NAME 원정팀명,
+        SC.HOME_SCORE '홈팀 점수', SC.AWAY_SCORE '원정팀 점수'
+FROM	STADIUM ST
+		JOIN SCHEDULE SC ON ST.STADIUM_ID = SC.STADIUM_ID
+        JOIN TEAM HT ON HT.TEAM_ID = SC.HOMETEAM_ID
+        JOIN TEAM AW ON AW.TEAM_ID = SC.AWAYTEAM_ID
+WHERE	GUBUN = 'Y' AND 
+		HOME_SCORE >= AWAY_SCORE + 3;
+        
+        
+-- PLAYER와 TEAM의 자연조인
+SELECT * 
+FROM	PLAYER NATURAL JOIN TEAM;
+
+
+-- 아래질의는 에러없이 수행되나, 조건에 맞는 결과는 없음
+SELECT *
+FROM TEAM NATURAL JOIN STADIUM; 
+
+
+-- CROSS JOIN
+-- TEAM 15개 투플, STADIUM 20개 투플, 따라서 300개 투플이 생성됨
+SELECT	TEAM_ID, TEAM_NAME, TEAM.STADIUM_ID, STADIUM_NAME
+FROM	TEAM CROSS JOIN STADIUM
+ORDER	BY TEAM_ID;
+
+
+-- 출력된 투플 수 카운트
+WITH TEMP AS(
+	SELECT	TEAM_ID, TEAM_NAME, TEAM.STADIUM_ID, STADIUM_NAME
+    FROM	TEAM CROSS JOIN STADIUM
+)
+SELECT	COUNT(*)
+FROM 	TEMP;
+
+
+-- 재귀조인: 동일 테이블 사이의 조인. 한 테이블에 자신의 PK를 참조하는 FK가 같이 존재함.
+SELECT	*
+FROM	EMPLOYEE;
+
+
+-- 직원의 주민번호와 이름, 그리고 상급자의 주민번호와 이름을 출력
+SELECT	EMP.SSN, CONCAT(EMP.FNAME, ' ', EMP.MINIT, '. ', EMP.LNAME) 직원,
+		MGR.SSN, CONCAT(MGR.FNAME, ' ', MGR.MINIT, '. ', MGR.LNAME) 매니저
+FROM	EMPLOYEE EMP 
+		JOIN EMPLOYEE MGR ON EMP.SUPER_SSN = MGR.SSN;
+        
+        
+-- 사원, 사원의 상위 관리자의 이름을 검색
+SELECT	CONCAT(EMP.FNAME, ' ', EMP.MINIT, '. ', EMP.LNAME) 사원이름,
+		CONCAT(MGR.FNAME, ' ', MGR.MINIT, '. ', MGR.LNAME) 매니저이름
+FROM	EMPLOYEE EMP
+		JOIN EMPLOYEE MGR ON EMP.SUPER_SSN = MGR.SSN;
+        
+        
+-- 사원, 사원의 상위 관리자의 이름을 검색하라. 단 상위 관리자가 없는 사원도 출력하라.
+SELECT	CONCAT(EMP.FNAME, ' ', EMP.MINIT, '. ', EMP.LNAME) 사원이름,
+		CONCAT(MGR.FNAME, ' ', MGR.MINIT, '. ', MGR.LNAME) 매니저이름
+FROM	EMPLOYEE EMP
+		LEFT OUTER JOIN EMPLOYEE MGR ON EMP.SUPER_SSN = MGR.SSN;
+        
+        
+-- 사원, 사원의 상위 관리자 및 차상위 관리자의 이름을 검색하라.
+-- 단, 상위 관리자 혹은 차상위 관리자가 없는 사원도 출력하라
+SELECT	CONCAT(EMP.FNAME, ' ', EMP.MINIT, '. ', EMP.LNAME) 사원이름,
+		CONCAT(MGR.FNAME, ' ', MGR.MINIT, '. ', MGR.LNAME) 매니저이름,
+        CONCAT(MMGR.FNAME, ' ', MMGR.MINIT, '. ', MMGR.LNAME) '대장 매니저이름'
+FROM	EMPLOYEE EMP
+		LEFT OUTER JOIN EMPLOYEE MGR ON EMP.SUPER_SSN = MGR.SSN
+        LEFT OUTER JOIN EMPLOYEE MMGR ON MGR.SUPER_SSN = MMGR.SSN;
