@@ -4,6 +4,15 @@ DESCRIBE PLAYER;
 DESCRIBE TEAM;
 DESCRIBE SCHEDULE;
 
+SELECT	*
+FROM	PLAYER;
+
+SELECT	*
+FROM	STADIUM;
+
+SELECT	*
+FROM	SCHEDULE;
+
 
 -- 선수들의 평균 키보다 작은 선수들을 검색
 SELECT	PLAYER_NAME 선수명, POSITION 포지션, BACK_NO 등번호
@@ -128,6 +137,50 @@ WHERE	TEAM_ID IN (
                         WHERE	P.NATION IN ('브라질', '러시아')
 					);
                     
+                    
+-- 20120501부터 20120502 사이에 경기가 열렸던 경기장을 조회
+SELECT	STADIUM_ID ID, STADIUM_NAME 경기장명
+FROM	STADIUM ST
+WHERE	ST.STADIUM_ID = (
+							SELECT	SC.STADIUM_ID
+                            FROM	SCHEDULE SC
+                            WHERE	SC.STADIUM_ID = ST.STADIUM_ID AND
+									SC.SCHE_DATE BETWEEN '2012-05-01' AND '2012-05-02'
+							);
+
+
+SELECT	STADIUM_ID ID, STADIUM_NAME 경기장명
+FROM	STADIUM ST
+WHERE	EXISTS (
+					SELECT	1
+					FROM	SCHEDULE SC
+                    WHERE	SC.STADIUM_ID = ST.STADIUM_ID AND
+							SC.SCHE_DATE BETWEEN '2012-05-01' AND '2012-05-02'
+				);
+
+
+-- K02 팀 소속이면서, 포지션이 GK인 선수들을 검색. (교집합)
+SELECT 	TEAM_ID 팀코드, PLAYER_NAME 선수명, POSITION 포지션, BACK_NO 백넘버, HEIGHT 키
+FROM	PLAYER P1
+WHERE	EXISTS (
+					SELECT	1
+                    FROM	PLAYER P2
+                    WHERE	P2.PLAYER_ID = P1.PLAYER_ID AND
+							P2.TEAM_ID = 'K02' AND
+                            P2.POSITION = 'GK'
+				);
+                
+SELECT 	TEAM_ID 팀코드, PLAYER_NAME 선수명, POSITION 포지션, BACK_NO 백넘버, HEIGHT 키
+FROM	PLAYER P1
+WHERE	P2.TEAM_ID = 'K02' AND
+		EXISTS (
+					SELECT	1
+                    FROM	PLAYER P2
+                    WHERE	P2.PLAYER_ID = P1.PLAYER_ID AND
+                            P2.POSITION = 'GK'
+				);
+							
+
 
 -- 선수 정보와 소속 팀의 평균 키를 함께 검색
 SELECT	TEAM_ID, PLAYER_NAME 선수명, HEIGHT 키,
@@ -199,3 +252,5 @@ WITH PLAYER_TEMP AS
 SELECT	PLAYER_NAME, POSITION, BACK_NO, HEIGHT
 FROM	PLAYER_TEMP
 LIMIT	5;
+
+
