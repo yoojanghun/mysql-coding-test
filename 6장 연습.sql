@@ -179,7 +179,12 @@ WHERE	P2.TEAM_ID = 'K02' AND
                     WHERE	P2.PLAYER_ID = P1.PLAYER_ID AND
                             P2.POSITION = 'GK'
 				);
-							
+					
+-- 조인 : 두 테이블의 투플을 연결함
+
+-- 연관 서브쿼리 : 메인쿼리 테이블을 필터링함 (메인쿼리 테이블의 투플 개수만큼 실행됨)
+-- 메인쿼리의 최종 결과는 메인쿼리 테이블의 부분 집합을 리턴함
+-- 메인쿼리 질의 결과에 서브쿼리 테이블의 컬럼을 포함해야 한다면, 서브쿼리 대신 조인을 사용해야 함.
 
 
 -- 선수 정보와 소속 팀의 평균 키를 함께 검색
@@ -241,7 +246,38 @@ FROM	PLAYER_TEMP
 WHERE	TEAM_ID = 'K09';
 
 
+-- 포지션이 MF인 선수들의 소속팀명 및 선수 정보를 검색
+SELECT	TEAM_NAME 팀명, PLAYER_NAME 선수명, BACK_NO 백넘버
+FROM	PLAYER JOIN TEAM USING(TEAM_ID)
+WHERE	PLAYER.POSITION = 'MF'
+ORDER BY 팀명, 선수명; 
+
+SELECT	T.TEAM_NAME 팀명, P.PLAYER_NAME 선수명, P.BACK_NO 백넘버
+FROM	(
+			SELECT	TEAM_ID, PLAYER_NAME, BACK_NO
+            FROM	PLAYER
+            WHERE	POSITION = 'MF'
+		) P, TEAM T
+WHERE	P.TEAM_ID = T.TEAM_ID
+ORDER	BY 팀명, 선수명;
+
+WITH PLAYER_TEMP AS
+(
+	SELECT TEAM_ID, PLAYER_NAME, BACK_NO
+	FROM PLAYER
+	WHERE POSITION = 'MF'
+)
+SELECT 	TEAM_NAME 팀명, PLAYER_NAME 선수명, BACK_NO 백넘버
+FROM 	PLAYER_TEMP JOIN TEAM USING (TEAM_ID)
+ORDER 	BY 팀명, 선수명;
+
+
 -- 키가 제일 큰 선수 5 명의 정보를 검색
+SELECT	PLAYER_NAME 선수명, POSITION 포지션, BACK_NO 백넘버, HEIGHT 키
+FROM	PLAYER
+ORDER	BY HEIGHT DESC
+LIMIT	5;
+
 WITH PLAYER_TEMP AS
 (
 	SELECT	PLAYER_NAME, POSITION, BACK_NO, HEIGHT
