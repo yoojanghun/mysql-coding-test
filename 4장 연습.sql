@@ -150,3 +150,17 @@ SELECT	PLAYER_NAME,
 		END	포지션
 FROM	PLAYER;
 
+
+-- 키 185 이상 'A', 키 175 이상 'B', 키 175 미만 'C' 키 NULL은 'UNDECIDED'
+SELECT	PLAYER_NAME, HEIGHT,
+		CASE
+			WHEN HEIGHT >= 185 		THEN 'A'
+            ELSE(
+					CASE
+						WHEN HEIGHT >= 175		THEN 'B'
+                        WHEN HEIGHT < 175		THEN 'C'
+                        WHEN HEIGHT IS NULL		THEN 'undefined'
+					END
+				)
+		END '신장 그룹'
+FROM	PLAYER;
