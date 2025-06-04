@@ -290,3 +290,18 @@ FROM	PLAYER_TEMP
 LIMIT	5;
 
 
+-- k02 팀의 평균키 보다 평균키가 작은 팀의 이름과 해당 팀의 평균키를 검색
+SELECT	T.TEAM_ID 팀코드, T.TEAM_NAME 팀명, AVG(P.HEIGHT) 평균키
+FROM	PLAYER P JOIN TEAM T USING(TEAM_ID)
+GROUP	BY TEAM_ID
+HAVING	AVG(P.HEIGHT) < (
+					SELECT	AVG(HEIGHT)
+                    FROM	PLAYER
+                    WHERE	TEAM_ID = 'K02'
+					);
+                    
+
+-- 서브쿼리의 용도
+-- 1. 테이블 필터로 사용 (WHERE절 서브쿼리) => 결과는 메인쿼리 테이블의 부분 집합
+-- 2. Column expression으로 사용 (SELECT절 서브쿼리) => 주로 집단 함수로 Scalar value 구함
+-- 3. 임시 테이블을 구성 (FROM절 서브쿼리) => WITH문의 역할과 동일
