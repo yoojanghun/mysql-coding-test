@@ -194,3 +194,31 @@ SELECT	EMP.EMPLOYEEID 직원번호,
         CONCAT(MGR.FIRSTNAME, ' ', MGR.LASTNAME) 상급자
 FROM	EMPLOYEES EMP 
 		LEFT OUTER JOIN EMPLOYEES MGR ON EMP.MANAGERID = MGR.EMPLOYEEID;
+        
+        
+-- 권장 소비자 가격이 권장 소비자가격 평균의 2배 이상인 상품을 검색
+SELECT	NAME 상품명, MSRP '권장 소비자가격'
+FROM	PRODUCTS
+WHERE	MSRP >= (
+					SELECT	2 * AVG(MSRP) 
+                    FROM	PRODUCTS
+				)
+ORDER	BY MSRP;
+
+
+-- 성이 'Patterson'인 직원이 근무하는 지점을 검색
+SELECT	officeCode, city
+FROM	OFFICES JOIN EMPLOYEES USING(OFFICECODE)
+WHERE	LASTNAME = 'Patterson'
+ORDER	BY OFFICECODE;
+
+WITH TEMP AS(
+				SELECT	officeCode, CITY
+                FROM	OFFICES JOIN EMPLOYEES USING(officeCode)
+			)
+SELECT	officeCode, CITY
+FROM	TEMP
+WHERE	LASTNAME = 'Patterson'
+ORDER	BY officeCode;
+/* 위처럼 하면 오류이다. TEMP로 만들어진 테이블에 LASTNAME 컬럼이 없기 때문이다. TEMP테이블 안에 LASTNAME 컬럼을 추가해야 한다. */
+
