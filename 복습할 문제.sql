@@ -78,3 +78,36 @@ SELECT	PLAYER_NAME, HEIGHT,
 				)
 		END AS 키등급
 FROM	PLAYER;
+
+
+/* 서브 쿼리 복습 */
+-- 선수들의 평균 키보다 작은 선수들을 검색
+SELECT	PLAYER_NAME, POSITION, BACK_NO, HEIGHT
+FROM	PLAYER
+WHERE	HEIGHT <= (
+						SELECT	AVG(HEIGHT)
+                        FROM	PLAYER
+				  )
+ORDER	BY PLAYER_NAME;
+
+
+-- 각 팀에서 가장 키가 작은 선수
+SELECT	TEAM_ID, PLAYER_NAME, HEIGHT
+FROM	PLAYER P1
+WHERE	HEIGHT = (
+						SELECT	MAX(HEIGHT)
+                        FROM	PLAYER P2
+                        WHERE	P2.TEAM_ID = P1.TEAM_ID
+				 )
+ORDER 	BY TEAM_ID;
+
+
+-- 브라질 혹은 러시아 출신 선수가 있는 팀을 검색
+SELECT	TEAM_ID, TEAM_NAME
+FROM	TEAM T
+WHERE	TEAM_ID IN (
+						SELECT	TEAM_ID
+                        FROM	PLAYER P 
+                        WHERE	P.TEAM_ID = T.TEAM_ID AND
+								(P.NATION IN ('브라질', '러시아'))
+					);
