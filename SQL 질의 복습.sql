@@ -105,3 +105,147 @@ WITH TEMP AS
 )
 SELECT	AVG(고객수)
 FROM	TEMP;
+
+
+-- 12. 직책이 'Sales Manager'인 직원의 직원번호, 성명, 직책, 근무 지점명을 검색
+SELECT	E.EMPLOYEEID 직원번호, CONCAT(E.LASTNAME, ' ', E.FIRSTNAME) 성명,
+		E.JOBTITLE 직책, O.TERRITORY
+FROM	OFFICES O JOIN EMPLOYEES E ON O.OFFICECODE = E.OFFICECODE
+WHERE	E.JOBTITLE LIKE '%Sales Manager%';
+
+
+-- 'USA'에 있는 지점에서 근무하는 직원이 관리하는 고객
+SELECT	CUSTOMERID, NAME 고객,
+		EMPLOYEEID, CONCAT(FIRSTNAME, ' ', LASTNAME) 직원,
+		O.OFFICECODE, O.CITY 지점
+FROM	OFFICES O 
+		JOIN EMPLOYEES E USING(OFFICECODE)
+        JOIN CUSTOMERS C ON E.EMPLOYEEID = C.SALESREPID
+WHERE	O.COUNTRY = 'USA'
+ORDER	BY O.OFFICECODE, EMPLOYEEID, CUSTOMERID;
+
+
+/* 다시 */
+-- 14. 'USA'에 있는 지점에서 주문된 상품의 상품명과 주문개수를 검색
+SELECT	productCode, P.name, SUM(quantity) AS CNT
+FROM	OFFICES O 
+		JOIN EMPLOYEES E USING(OFFICECODE)
+        JOIN CUSTOMERS C ON E.EMPLOYEEID = C.SALESREPID
+        JOIN ORDERS  	 USING(CUSTOMERID)
+        JOIN ORDERDETAILS OD USING (ORDERNO)
+        JOIN PRODUCTS P  USING(PRODUCTCODE)
+WHERE	O.COUNTRY = 'USA'
+GROUP	BY PRODUCTCODE
+ORDER 	BY 3 DESC;
+
+
+-- 15. 고객과 고객의 담당 직원을 검색. 단, 담당 직원이 없는 고객도 포함.
+SELECT	customerId, C.name, city,
+		employeeId, CONCAT(firstName, ' ', lastName) AS name
+FROM	EMPLOYEES E RIGHT JOIN CUSTOMERS C ON E.EMPLOYEEID = C.SALESREPID
+ORDER 	BY name, C.name;
+
+
+-- 16. 고객과 고객의 담당 직원을 검색. 단, 담당 직원이 없는 고객과 담당 고객이 없는 직원도 포함.
+SELECT	customerId, C.name, city,
+		employeeId, CONCAT(firstName, ' ', lastName) AS name
+FROM	EMPLOYEES E RIGHT JOIN CUSTOMERS C ON E.EMPLOYEEID = C.SALESREPID
+UNION
+SELECT	customerId, C.name, city,
+		employeeId, CONCAT(firstName, ' ', lastName) AS name
+FROM	EMPLOYEES E LEFT JOIN CUSTOMERS C ON E.EMPLOYEEID = C.SALESREPID;
+
+
+-- 17. 직원과 직원의 상급자를 검색, 단, 상급자가 없는 직원도 포함
+SELECT	emp.employeeId,
+		CONCAT(emp.firstName, ' ', emp.lastName) AS employee, emp.jobTitle, 
+        mgr.employeeId AS managerId,
+        CONCAT(mgr.firstName, ' ', mgr.lastName) AS manager
+FROM	EMPLOYEES EMP LEFT JOIN EMPLOYEES MGR ON EMP.MANAGERID = MGR.EMPLOYEEID;
+
+
+-- 18. 권장 소비자 가격이 권장 소비자가격 평균의 2배 이상인 상품을 검색
+SELECT	name 상품명, MSRP '권장 소비자가격'
+FROM	PRODUCTS
+WHERE	MSRP >= (
+					SELECT	2*AVG(MSRP)
+                    FROM	PRODUCTS
+				);
+                
+
+/* 다시 */
+-- 19. 성이 'Patterson'인 직원이 근무하는 지점을 검색
+SELECT	officeCode, city 
+FROM	OFFICES
+WHERE	OFFICECODE IN (
+							SELECT	OFFICECODE	
+							FROM	EMPLOYEES
+							WHERE	LASTNAME = 'Patterson'
+					  )
+ORDER 	BY officeCode;        
+
+
+-- 20. 각 상품라인에서 권장 소비자가격이 가장 저렴한 상품을 검색
+SELECT	productLine 상품라인, name 상품명, MSRP 소비자가격
+FROM	PRODUCTS P1
+WHERE	MSRP = (
+					SELECT	MIN(MSRP)
+                    FROM	PRODUCTS P2
+                    WHERE	P2.PRODUCTLINE = P1.PRODUCTLINE
+				)
+ORDER 	BY productLine, name;
+
+
+/* 다시 */
+-- 21. 상태가 'Cancelled' 혹은 'On Hold'인 주문을 한 고객을 검색
+SELECT	name
+FROM	CUSTOMERS
+WHERE	CUSTOMERID IN (
+							SELECT	CUSTOMERID
+                            FROM	ORDERS O
+									JOIN CUSTOMERS C USING(CUSTOMERID)
+							WHERE	O.STATUS IN ('Cancelled', 'On Hold')
+					  );
+
+SELECT NAME
+FROM	CUSTOMERS C
+WHERE	CUSTOMERID IN (
+							SELECT	CUSTOMERID
+                            FROM	ORDERS O
+                            WHERE	O.STATUS IN ('Cancelled', 'On Hold') AND
+									O.CUSTOMERID = C.CUSTOMERID
+					  );
+  
+
+/* 다시 */
+-- 22. 2003년 1월에 주문한 고객을 검색
+SELECT	NAME
+FROM	CUSTOMERS C
+WHERE	CUSTOMERID IN (
+							SELECT	CUSTOMERID
+                            FROM	ORDERS O
+                            WHERE	YEAR(ORDERDATE) = 2003 AND
+									MONTH(ORDERDATE) = 1   AND
+                                    O.CUSTOMERID = C.CUSTOMERID
+					  );
+                      
+SELECT	NAME
+FROM	CUSTOMERS C
+WHERE	EXISTS (
+						SELECT	*
+						FROM	ORDERS O
+						WHERE	YEAR(ORDERDATE) = 2003 AND
+								MONTH(ORDERDATE) = 1   AND
+								O.CUSTOMERID = C.CUSTOMERID
+			   );
+               
+               
+/* 다시 */ 
+-- 23. 지점명과 지점에 근무하는 직원의 수를 검색
+SELECT	CITY 지점명,
+		(
+			SELECT	COUNT(*)
+            FROM	EMPLOYEES E
+            WHERE	E.OFFICECODE = O.OFFICECODE	
+		) 직원수
+FROM	OFFICES O;
